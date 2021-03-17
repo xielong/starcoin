@@ -62,12 +62,12 @@ struct TestAttributeOpts {
 ///
 /// #[stest::test(timeout = 1)]
 /// async fn test_async_timeout() {
-///     stest::actix_export::time::delay_for(Duration::from_secs(6)).await;
+///     stest::actix_export::time::sleep(Duration::from_secs(6)).await;
 /// }
 ///
 /// #[stest::test(timeout = 1)]
 /// async fn test_async_timeout_result() -> anyhow::Result<()> {
-///     stest::actix_export::time::delay_for(Duration::from_secs(6)).await;
+///     stest::actix_export::time::sleep(Duration::from_secs(6)).await;
 ///     Ok(())
 /// }
 ///
@@ -115,77 +115,88 @@ pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    let result = if input.sig.asyncness.is_none() {
-        if has_test_attr {
-            quote! {
-                #(#attrs)*
-                fn #name() #ret {
-                    stest::init_test_logger();
-                    let (tx,rx) = std::sync::mpsc::channel();
-
-                    stest::timeout(#timeout,move ||{
-                        #body;
-                    },tx);
-
-                    stest::wait_channel(rx)
-                }
-            }
-        } else {
-            quote! {
-                #[test]
-                #(#attrs)*
-                fn #name() #ret {
-                    stest::init_test_logger();
-                    let (tx,rx) = std::sync::mpsc::channel();
-
-                    stest::timeout(#timeout,move ||{
-                        #body
-                    },tx);
-
-                    stest::wait_channel(rx)
-                }
-            }
-        }
-    } else if has_test_attr {
-        quote! {
-            #(#attrs)*
-            fn #name() #ret {
-                stest::init_test_logger();
-                let (tx,mut rx) = stest::make_channel();
-
-                let mut rt = stest::Runtime::new().expect("Tokio runtime");
-
-                let local = stest::LocalSet::new();
-                let future = stest::actix_export::System::run_in_tokio("test", &local);
-                local.spawn_local(future);
-
-                stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
-                stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
-
-                local.block_on(&mut rt,stest::wait_result(rx))
-            }
-        }
+    let missing_test_attr = if has_test_attr {
+        quote!()
     } else {
-        quote! {
-            #[test]
-            #(#attrs)*
-            fn #name() #ret {
-                stest::init_test_logger();
-                let (tx,mut rx) = stest::make_channel();
-
-                let mut rt = stest::Runtime::new().expect("Tokio runtime");
-
-                let local = stest::LocalSet::new();
-                let future = stest::actix_export::System::run_in_tokio("test", &local);
-                local.spawn_local(future);
-
-                stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
-                stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
-
-                local.block_on(&mut rt,stest::wait_result(rx))
-             }
-        }
+        quote!(#[test])
     };
 
-    result.into()
+    (quote! {
+        #missing_test_attr
+        #(#attrs)*
+        fn #name() #ret {
+            stest::init_test_logger();
+            stest::actix_export::System::new()
+                .block_on(async { #body })
+        }
+    })
+    .into()
+
+    // let result = if input.sig.asyncness.is_none() {
+    //     if has_test_attr {
+    //         quote! {
+    //             #(#attrs)*
+    //             fn #name() #ret {
+    //                 stest::init_test_logger();
+    //                 let (tx,rx) = std::sync::mpsc::channel();
+    //
+    //                 stest::timeout(#timeout,move ||{
+    //                     #body;
+    //                 },tx);
+    //
+    //                 stest::wait_channel(rx)
+    //             }
+    //         }
+    //     } else {
+    //         quote! {
+    //             #[test]
+    //             #(#attrs)*
+    //             fn #name() #ret {
+    //                 stest::init_test_logger();
+    //                 let (tx,rx) = std::sync::mpsc::channel();
+    //
+    //                 stest::timeout(#timeout,move ||{
+    //                     #body
+    //                 },tx);
+    //
+    //                 stest::wait_channel(rx)
+    //             }
+    //         }
+    //     }
+    // } else if has_test_attr {
+    //     quote! {
+    //         #(#attrs)*
+    //         fn #name() #ret {
+    //             stest::init_test_logger();
+    //             let (tx,mut rx) = stest::make_channel();
+    //
+    //              let system = stest::actix_export::System::with_tokio_rt(||{
+    //              stest::Runtime::new().expect("Tokio runtime")});
+    //
+    //             stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
+    //             stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
+    //
+    //             system.block_on(stest::wait_result(rx))
+    //         }
+    //     }
+    // } else {
+    //     quote! {
+    //         #[test]
+    //         #(#attrs)*
+    //         fn #name() #ret {
+    //             stest::init_test_logger();
+    //             let (tx,mut rx) = stest::make_channel();
+    //
+    //             let system = stest::actix_export::System::with_tokio_rt(||{
+    //              stest::Runtime::new().expect("Tokio runtime")});
+    //
+    //             stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
+    //             stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
+    //
+    //             system.block_on(stest::wait_result(rx))
+    //          }
+    //     }
+    // };
+
+    // result.into()
 }

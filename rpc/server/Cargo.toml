@@ -16,8 +16,8 @@ dashmap = "4.0"
 hex = { version = "0.4.3", default-features = false }
 serde = { version = "1.0.124", features = ["derive"] }
 serde_json = { version="1.0", features = ["arbitrary_precision"]}
-actix = "0.10.0"
-actix-rt = "1.1"
+actix = "0.11.0-beta.3"
+actix-rt = "2.1.0"
 jsonrpc-core = { version = "17.0.0", features = ["arbitrary_precision"] }
 jsonrpc-derive = "17.0.0"
 jsonrpc-http-server = "17.0.0"
@@ -71,7 +71,7 @@ stest = { path = "../../commons/stest"}
 starcoin-rpc-client = { path = "../client"}
 starcoin-txpool-mock-service = {path ="../../txpool/mock-service"}
 starcoin-executor={path="../../executor"}
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "1.3.0", features = ["full"] }
 starcoin-genesis = {path = "../../core/genesis"}
 test-helper = { path = "../../test-helper" }
 starcoin-chain-mock = { path = "../../chain/mock" }

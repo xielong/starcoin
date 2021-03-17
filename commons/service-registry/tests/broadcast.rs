@@ -4,10 +4,10 @@
 use crate::common::broadcast_process_service::{
     BMessage1, BMessage2, BroadcastProcessAsyncService, BroadcastProcessService,
 };
-use actix::clock::Duration;
 use futures_timer::Delay;
 use starcoin_service_registry::bus::{Bus, BusService};
 use starcoin_service_registry::{RegistryAsyncService, RegistryService};
+use std::time::Duration;
 
 pub mod common;
 

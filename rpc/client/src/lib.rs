@@ -127,7 +127,7 @@ impl RpcClient {
         let inner: RpcClientInner = provider.get_rpc_channel().map_err(map_err)?.into(); //Self::create_client_inner(conn_source.clone()).map_err(map_err)?;
         let pubsub_client = inner.pubsub_client.clone();
         let handle = std::thread::spawn(move || {
-            let sys = System::new("client-actix-system");
+            let sys = System::new();
             let watcher = ChainWatcher::launch();
 
             tx.send(watcher).unwrap();

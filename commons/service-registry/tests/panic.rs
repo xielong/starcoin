@@ -15,10 +15,7 @@ pub mod common;
 #[stest::test]
 fn test_service_panic() {
     //Fixme Expect the system stop on panic,but this feature not work as expect.
-    let mut sys = System::builder()
-        .stop_on_panic(true)
-        .name("panic_test")
-        .build();
+    let sys = System::new();
     sys.block_on(async {
         let registry = RegistryService::launch();
         let service_ref = registry.register::<PanicService>().await.unwrap();

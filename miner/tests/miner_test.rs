@@ -15,7 +15,7 @@ use starcoin_storage::BlockStore;
 use starcoin_txpool::TxPoolService;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::time::delay_for;
+use tokio::time::sleep;
 use types::{
     system_events::{GenerateBlockEvent, MintBlockEvent, NewHeadBlock, SubmitSealEvent},
     U256,
@@ -101,9 +101,9 @@ async fn test_miner_service() {
     let miner = miner.unwrap();
     miner.notify(GenerateBlockEvent::new(false)).unwrap();
 
-    delay_for(Duration::from_millis(200)).await;
+    sleep(Duration::from_millis(200)).await;
     miner.notify(GenerateBlockEvent::new(true)).unwrap();
-    delay_for(Duration::from_millis(200)).await;
+    sleep(Duration::from_millis(200)).await;
     // Generate a event
     let diff = U256::from(1024);
     let minting_blob = vec![0u8; 76];

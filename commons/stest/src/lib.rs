@@ -13,6 +13,7 @@ pub use stest_macro::test;
 pub use tokio::{runtime::Runtime, task::LocalSet};
 
 pub mod actix_export {
+    pub use actix_rt::System;
     pub use actix_rt::*;
 }
 
@@ -47,7 +48,7 @@ pub fn make_channel<T>() -> (UnboundedSender<Result<T>>, UnboundedReceiver<Resul
 }
 
 pub async fn timeout_future<T>(timeout: u64, tx: UnboundedSender<Result<T>>) {
-    actix::clock::delay_for(Duration::from_secs(timeout)).await;
+    actix::clock::sleep(Duration::from_secs(timeout)).await;
     let _ = tx.unbounded_send(Err(format_err!(
         "test timeout for wait {} seconds",
         timeout

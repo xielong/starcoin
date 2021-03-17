@@ -7,7 +7,8 @@ use crate::service_cache::ServiceCache;
 use crate::{RegistryAsyncService, RegistryService};
 use crate::{ServiceRef, ServiceRequest};
 use actix::fut::{wrap_future, IntoActorFuture};
-use actix::{ActorContext, ActorFuture, AsyncContext, Context};
+use actix::ActorFutureExt;
+use actix::{ActorContext, AsyncContext, Context};
 use anyhow::{format_err, Result};
 use futures::channel::oneshot::{channel, Receiver};
 use futures::executor::block_on;
@@ -124,7 +125,7 @@ where
         let notifier = self.self_ref().event_notifier();
         let bus = self.bus_ref().clone();
         let fut = wrap_future::<_, ServiceActor<S>>(async move { bus.subscribe(notifier).await })
-            .map(|r, _act, _ctx| {
+            .map(|r, _actor, _ctx| {
                 if let Err(e) = r {
                     error!(
                         "Subscribe {} for service {} error: {:?}",
@@ -153,7 +154,7 @@ where
     {
         let bus = self.bus_ref().clone();
         let fut = wrap_future::<_, ServiceActor<S>>(async move { bus.unsubscribe::<S, M>().await })
-            .map(|r, _act, _ctx| {
+            .map(|r, _actor, _ctx| {
                 if let Err(e) = r {
                     error!(
                         "Unsubscribe {} for service {} error: {:?}",

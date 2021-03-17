@@ -1,12 +1,12 @@
 // Copyright (c) The Starcoin Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use actix::clock::Duration;
 use common::cal_service::CalService;
 use common::loop_task_service::{GetTaskStatus, LoopTaskService, StartTaskEvent};
 use futures_timer::Delay;
 use log::debug;
 use starcoin_service_registry::{RegistryAsyncService, RegistryService};
+use std::time::Duration;
 
 pub mod common;
 

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::common::cal_service::{CalAsyncService, CalService};
-use actix::clock::Duration;
 use anyhow::Result;
 use futures_timer::Delay;
 use log::{error, info};
@@ -10,6 +9,7 @@ use starcoin_service_registry::{
     ActorService, EventHandler, ServiceContext, ServiceFactory, ServiceHandler, ServiceRef,
     ServiceRequest,
 };
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub struct TaskStatus {

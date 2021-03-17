@@ -19,7 +19,7 @@ use starcoin_statedb::ChainStateDB;
 use starcoin_txpool_api::{TxPoolSyncService, TxnStatusFullEvent};
 use std::time::Duration;
 use std::{collections::HashMap, sync::Arc};
-use stest::actix_export::time::delay_for;
+use stest::actix_export::time::sleep;
 use storage::BlockStore;
 use types::{
     account_address::{self, AccountAddress},
@@ -116,7 +116,7 @@ async fn test_pool_pending() -> Result<()> {
         }
     }
     let _ = txpool_service.add_txns(txn_vec.clone());
-    delay_for(Duration::from_millis(200)).await;
+    sleep(Duration::from_millis(200)).await;
 
     txn_vec.clear();
     loop {
@@ -129,7 +129,7 @@ async fn test_pool_pending() -> Result<()> {
     let _ = txpool_service.add_txns(txn_vec.clone());
     let pending = txpool_service.get_pending_txns(Some(count), None);
     assert!(!pending.is_empty());
-    delay_for(Duration::from_millis(200)).await;
+    sleep(Duration::from_millis(200)).await;
     Ok(())
 }
 
@@ -239,7 +239,7 @@ async fn test_txpool_actor_service() {
         ))
         .unwrap();
 
-    delay_for(Duration::from_millis(200)).await;
+    sleep(Duration::from_millis(200)).await;
     tx_pool_actor
         .notify(Into::<TxnStatusFullEvent>::into(vec![(
             txn.id(),
@@ -247,7 +247,7 @@ async fn test_txpool_actor_service() {
         )]))
         .unwrap();
 
-    delay_for(Duration::from_millis(300)).await;
+    sleep(Duration::from_millis(300)).await;
 }
 
 fn generate_txn(config: Arc<NodeConfig>, seq: u64) -> SignedUserTransaction {

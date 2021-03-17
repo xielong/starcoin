@@ -63,7 +63,7 @@ async fn start_loop(block_client: BlockClient, sinker: EsSinker) -> Result<()> {
             None => 0,
         };
         if next_block_number > remote_tip_header.number.0 {
-            tokio::time::delay_for(Duration::from_secs(1)).await;
+            tokio::time::sleep(Duration::from_secs(1)).await;
         } else {
             let next_block: BlockData = FutureRetry::new(
                 || {
@@ -122,9 +122,8 @@ fn main() -> anyhow::Result<()> {
     let _log_handle = starcoin_logger::init();
     let opts: Options = Options::parse();
     info!("opts: {:?}", &opts);
-    let mut rt = runtime::Builder::new()
+    let rt = runtime::Builder::new_multi_thread()
         .thread_name("starcoin-indexer")
-        .threaded_scheduler()
         .enable_all()
         .build()?;
     let channel: ChainClient = rt

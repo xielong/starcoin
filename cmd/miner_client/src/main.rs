@@ -43,10 +43,7 @@ fn main() {
         }
     };
 
-    let mut system = System::builder()
-        .stop_on_panic(true)
-        .name("starcoin-miner")
-        .build();
+    let system = System::new();
     if let Err(err) = system.block_on(async move {
         let registry = RegistryService::launch();
         let job_client = JobRpcClient::new(client);

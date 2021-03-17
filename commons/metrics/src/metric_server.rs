@@ -69,8 +69,7 @@ pub fn start_server(addr: SocketAddr) {
         let make_service =
             make_service_fn(|_| future::ok::<_, hyper::Error>(service_fn(serve_metrics)));
 
-        let mut rt = runtime::Builder::new()
-            .basic_scheduler()
+        let rt = runtime::Builder::new_multi_thread()
             .enable_io()
             .build()
             .expect("build tokio runtime failed");
