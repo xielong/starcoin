@@ -8794,7 +8794,6 @@ dependencies = [
  "starcoin-logger",
  "stest-macro",
  "timeout-join-handler",
- "tokio 1.3.0",
 ]
 
 [[package]]
