@@ -121,82 +121,43 @@ pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
         quote!(#[test])
     };
 
-    (quote! {
-        #missing_test_attr
-        #(#attrs)*
-        fn #name() #ret {
-            stest::init_test_logger();
-            stest::actix_export::System::new()
-                .block_on(async { #body })
+    let result = if input.sig.asyncness.is_none() {
+        quote! {
+            #missing_test_attr
+            #(#attrs)*
+            fn #name() #ret {
+                stest::init_test_logger();
+                let (tx,rx) = std::sync::mpsc::channel();
+
+                stest::timeout(#timeout,move ||{
+                    #body;
+                },tx);
+
+                stest::wait_channel(rx)
+            }
         }
-    })
-    .into()
+    } else {
+        quote! {
+            #missing_test_attr
+            #(#attrs)*
+            fn #name() #ret {
+                // stest::init_test_logger();
+                // stest::actix_export::System::new()
+                //     .block_on(async { #body })
 
-    // let result = if input.sig.asyncness.is_none() {
-    //     if has_test_attr {
-    //         quote! {
-    //             #(#attrs)*
-    //             fn #name() #ret {
-    //                 stest::init_test_logger();
-    //                 let (tx,rx) = std::sync::mpsc::channel();
-    //
-    //                 stest::timeout(#timeout,move ||{
-    //                     #body;
-    //                 },tx);
-    //
-    //                 stest::wait_channel(rx)
-    //             }
-    //         }
-    //     } else {
-    //         quote! {
-    //             #[test]
-    //             #(#attrs)*
-    //             fn #name() #ret {
-    //                 stest::init_test_logger();
-    //                 let (tx,rx) = std::sync::mpsc::channel();
-    //
-    //                 stest::timeout(#timeout,move ||{
-    //                     #body
-    //                 },tx);
-    //
-    //                 stest::wait_channel(rx)
-    //             }
-    //         }
-    //     }
-    // } else if has_test_attr {
-    //     quote! {
-    //         #(#attrs)*
-    //         fn #name() #ret {
-    //             stest::init_test_logger();
-    //             let (tx,mut rx) = stest::make_channel();
-    //
-    //              let system = stest::actix_export::System::with_tokio_rt(||{
-    //              stest::Runtime::new().expect("Tokio runtime")});
-    //
-    //             stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
-    //             stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
-    //
-    //             system.block_on(stest::wait_result(rx))
-    //         }
-    //     }
-    // } else {
-    //     quote! {
-    //         #[test]
-    //         #(#attrs)*
-    //         fn #name() #ret {
-    //             stest::init_test_logger();
-    //             let (tx,mut rx) = stest::make_channel();
-    //
-    //             let system = stest::actix_export::System::with_tokio_rt(||{
-    //              stest::Runtime::new().expect("Tokio runtime")});
-    //
-    //             stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
-    //             stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
-    //
-    //             system.block_on(stest::wait_result(rx))
-    //          }
-    //     }
-    // };
+                let (tx,mut rx) = stest::make_channel();
+                let system = stest::actix_export::System::with_tokio_rt(||{
+                stest::Builder::new_current_thread()
+                .enable_all()
+                .build().expect("Tokio runtime")});
 
-    // result.into()
+                stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
+                stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
+
+                system.block_on(stest::wait_result(rx))
+            }
+
+        }
+    };
+    result.into()
 }

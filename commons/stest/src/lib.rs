@@ -10,7 +10,10 @@ use futures::Future;
 use std::sync::mpsc::{Receiver, Sender};
 use std::time::Duration;
 pub use stest_macro::test;
-pub use tokio::{runtime::Runtime, task::LocalSet};
+pub use tokio::{
+    runtime::{Builder, Runtime},
+    task::LocalSet,
+};
 
 pub mod actix_export {
     pub use actix_rt::System;
