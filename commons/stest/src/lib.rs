@@ -10,10 +10,10 @@ use futures::Future;
 use std::sync::mpsc::{Receiver, Sender};
 use std::time::Duration;
 pub use stest_macro::test;
-pub use tokio::{
-    runtime::{Builder, Runtime},
-    task::LocalSet,
-};
+// pub use tokio::{
+//     runtime::{Builder, Runtime},
+//     task::LocalSet,
+// };
 
 pub mod actix_export {
     pub use actix_rt::System;
@@ -63,9 +63,8 @@ where
     F: Future<Output = T> + Send + 'static,
     T: Send + 'static,
 {
-    let join = tokio::task::spawn_local(f);
-    let t = join.await;
-    let _ = tx.unbounded_send(t.map_err(Into::<anyhow::Error>::into));
+    let t = f.await;
+    let _ = tx.unbounded_send(Ok(t));
 }
 
 pub async fn wait_result<T>(mut rx: UnboundedReceiver<Result<T>>) -> T {

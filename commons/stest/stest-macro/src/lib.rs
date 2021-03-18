@@ -130,7 +130,7 @@ pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
                 let (tx,rx) = std::sync::mpsc::channel();
 
                 stest::timeout(#timeout,move ||{
-                    #body;
+                    #body
                 },tx);
 
                 stest::wait_channel(rx)
@@ -141,18 +141,12 @@ pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
             #missing_test_attr
             #(#attrs)*
             fn #name() #ret {
-                // stest::init_test_logger();
-                // stest::actix_export::System::new()
-                //     .block_on(async { #body })
-
+                stest::init_test_logger();
                 let (tx,mut rx) = stest::make_channel();
-                let system = stest::actix_export::System::with_tokio_rt(||{
-                stest::Builder::new_current_thread()
-                .enable_all()
-                .build().expect("Tokio runtime")});
-
-                stest::actix_export::Arbiter::spawn(stest::timeout_future(#timeout,tx.clone()));
-                stest::actix_export::Arbiter::spawn(stest::test_future(async{ #body },tx));
+                let system = stest::actix_export::System::new();
+                let arbiter = stest::actix_export::Arbiter::new();
+                arbiter.spawn(stest::timeout_future(#timeout,tx.clone()));
+                arbiter.spawn(stest::test_future(async{ #body },tx));
 
                 system.block_on(stest::wait_result(rx))
             }
