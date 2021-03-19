@@ -7760,7 +7760,7 @@ version = "1.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "futures 0.3.12",
- "hyper 0.13.10",
+ "hyper 0.14.4",
  "once_cell",
  "prometheus",
  "psutil",
