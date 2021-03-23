@@ -449,10 +449,10 @@ impl TxnMocker {
                     if let Some(amount) = balance {
                         if amount > 0 {
                             available_list.push(account);
+                            index += 1;
                         }
                     }
                 }
-                index += 1;
             } else {
                 break;
             }
