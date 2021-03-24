@@ -1,0 +1,86 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kube-logging
+  name: elasticsearch-data
+  labels:
+    app: elasticsearch
+    role: data
+spec:
+  ports:
+    - port: 9300
+      name: transport
+  selector:
+    app: elasticsearch
+    role: data
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: kube-logging
+  name: elasticsearch-data
+  labels:
+    app: elasticsearch
+    role: data
+spec:
+  serviceName: "elasticsearch-data"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: elasticsearch
+      role: data
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        role: data
+    spec:
+      containers:
+        - name: elasticsearch-data
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+          env:
+            - name: CLUSTER_NAME
+              value: elasticsearch
+            - name: NODE_NAME
+              value: elasticsearch-data
+            - name: NODE_LIST
+              value: elasticsearch-master,elasticsearch-data,elasticsearch-client
+            - name: MASTER_NODES
+              value: elasticsearch-master
+            - name: "ES_JAVA_OPTS"
+              value: "-Xms1g -Xmx1g"
+          ports:
+            - containerPort: 9300
+              name: transport
+          volumeMounts:
+            - name: config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              readOnly: true
+              subPath: elasticsearch.yml
+            - name: elasticsearch-data-persistent-storage
+              mountPath: /data/db
+      initContainers:
+        - name: increase-vm-max-map
+          image: busybox
+          command: [ "sysctl", "-w", "vm.max_map_count=262144" ]
+          securityContext:
+            privileged: true
+        - name: increase-fd-ulimit
+          image: busybox
+          command: [ "sh", "-c", "ulimit -n 65536" ]
+          securityContext:
+            privileged: true
+      volumes:
+        - name: config
+          configMap:
+            name: elasticsearch-data-config
+  volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data-persistent-storage
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Gi
+---
