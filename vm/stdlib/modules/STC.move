@@ -13,6 +13,7 @@ module STC {
     use 0x1::ConsensusConfig;
     use 0x1::RewardConfig;
     use 0x1::TransactionTimeoutConfig;
+    use 0x1::Treasury;
 
     spec module {
         pragma verify;
@@ -60,6 +61,48 @@ module STC {
         OnChainConfigDao::plugin<STC, ConsensusConfig::ConsensusConfig>(account);
         OnChainConfigDao::plugin<STC, RewardConfig::RewardConfig>(account);
         OnChainConfigDao::plugin<STC, TransactionTimeoutConfig::TransactionTimeoutConfig>(account);
+    }
+
+    /// STC initialization.
+    public fun initialize_v2(
+        signer: &signer,
+        total_amount: u128,
+        voting_delay: u64,
+        voting_period: u64,
+        voting_quorum_rate: u8,
+        min_action_delay: u64,
+    ): Treasury::WithdrawCapability<STC> {
+        Token::register_token<STC>(signer, PRECISION);
+
+        // Mint all stc, and destroy mint capability
+
+        let total_stc = Token::mint<STC>(signer, total_amount);
+        let withdraw_cap = Treasury::initialize(signer, total_stc);
+        let mint_cap = Token::remove_mint_capability<STC>(signer);
+        Token::destroy_mint_capability(mint_cap);
+
+        let burn_cap = Token::remove_burn_capability<STC>(signer);
+        move_to(signer, SharedBurnCapability { cap: burn_cap });
+        Dao::plugin<STC>(
+            signer,
+            voting_delay,
+            voting_period,
+            voting_quorum_rate,
+            min_action_delay,
+        );
+        ModifyDaoConfigProposal::plugin<STC>(signer);
+        let upgrade_plan_cap = PackageTxnManager::extract_submit_upgrade_plan_cap(signer);
+        UpgradeModuleDaoProposal::plugin<STC>(
+            signer,
+            upgrade_plan_cap,
+        );
+        // the following configurations are gov-ed by Dao.
+        OnChainConfigDao::plugin<STC, TransactionPublishOption::TransactionPublishOption>(signer);
+        OnChainConfigDao::plugin<STC, VMConfig::VMConfig>(signer);
+        OnChainConfigDao::plugin<STC, ConsensusConfig::ConsensusConfig>(signer);
+        OnChainConfigDao::plugin<STC, RewardConfig::RewardConfig>(signer);
+        OnChainConfigDao::plugin<STC, TransactionTimeoutConfig::TransactionTimeoutConfig>(signer);
+        withdraw_cap
     }
 
     spec fun initialize {
