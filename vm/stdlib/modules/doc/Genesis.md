@@ -7,6 +7,7 @@ The module for init Genesis
 
 
 -  [Function `initialize`](#0x1_Genesis_initialize)
+-  [Function `upgrade_v2`](#0x1_Genesis_upgrade_v2)
 -  [Function `initialize_v2`](#0x1_Genesis_initialize_v2)
 -  [Specification](#@Specification_0)
 
@@ -170,12 +171,12 @@ The module for init Genesis
         <a href="Option.md#0x1_Option_some">Option::some</a>(0),
     );
     // stc should be initialized after genesis_account's <b>module</b> upgrade strategy set.
-        {
-            <a href="STC.md#0x1_STC_initialize">STC::initialize</a>(&genesis_account, voting_delay, voting_period, voting_quorum_rate, min_action_delay);
-            <a href="Account.md#0x1_Account_do_accept_token">Account::do_accept_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&genesis_account);
-            <a href="DummyToken.md#0x1_DummyToken_initialize">DummyToken::initialize</a>(&genesis_account);
-            <a href="Account.md#0x1_Account_do_accept_token">Account::do_accept_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&association);
-        };
+    {
+        <a href="STC.md#0x1_STC_initialize">STC::initialize</a>(&genesis_account, voting_delay, voting_period, voting_quorum_rate, min_action_delay);
+        <a href="Account.md#0x1_Account_do_accept_token">Account::do_accept_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&genesis_account);
+        <a href="DummyToken.md#0x1_DummyToken_initialize">DummyToken::initialize</a>(&genesis_account);
+        <a href="Account.md#0x1_Account_do_accept_token">Account::do_accept_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&association);
+    };
     <b>if</b> (pre_mine_stc_amount &gt; 0) {
         <b>let</b> stc = <a href="Token.md#0x1_Token_mint">Token::mint</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&genesis_account, pre_mine_stc_amount);
         <a href="Account.md#0x1_Account_deposit">Account::deposit</a>(<a href="Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&association), stc);
@@ -199,6 +200,30 @@ The module for init Genesis
     <a href="Timestamp.md#0x1_Timestamp_set_time_has_started">Timestamp::set_time_has_started</a>(&genesis_account);
     <a href="Account.md#0x1_Account_release_genesis_signer">Account::release_genesis_signer</a>(genesis_account);
     <a href="Account.md#0x1_Account_release_genesis_signer">Account::release_genesis_signer</a>(association);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Genesis_upgrade_v2"></a>
+
+## Function `upgrade_v2`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="Genesis.md#0x1_Genesis_upgrade_v2">upgrade_v2</a>(_total_stc_amount: u128)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="Genesis.md#0x1_Genesis_upgrade_v2">upgrade_v2</a>(_total_stc_amount: u128) {
+
 }
 </code></pre>
 
@@ -334,12 +359,15 @@ The module for init Genesis
         <a href="PackageTxnManager.md#0x1_PackageTxnManager_get_strategy_two_phase">PackageTxnManager::get_strategy_two_phase</a>(),
         <a href="Option.md#0x1_Option_some">Option::some</a>(0),
     );
-    // stc should be initialized after genesis_account's <b>module</b> upgrade strategy set.
+    <a href="BlockReward.md#0x1_BlockReward_initialize">BlockReward::initialize</a>(&genesis_account, reward_delay);
+
+    // stc should be initialized after genesis_account's <b>module</b> upgrade strategy set and all on chain config init.
 
     <b>let</b> withdraw_cap = <a href="STC.md#0x1_STC_initialize_v2">STC::initialize_v2</a>(&genesis_account, total_stc_amount, voting_delay, voting_period, voting_quorum_rate, min_action_delay);
     <a href="Account.md#0x1_Account_do_accept_token">Account::do_accept_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&genesis_account);
-    <a href="DummyToken.md#0x1_DummyToken_initialize">DummyToken::initialize</a>(&genesis_account);
     <a href="Account.md#0x1_Account_do_accept_token">Account::do_accept_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&association);
+
+    <a href="DummyToken.md#0x1_DummyToken_initialize">DummyToken::initialize</a>(&genesis_account);
 
     <b>if</b> (pre_mine_stc_amount &gt; 0) {
         <b>let</b> stc = <a href="Treasury.md#0x1_Treasury_withdraw_with_cap">Treasury::withdraw_with_cap</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(&<b>mut</b> withdraw_cap, pre_mine_stc_amount);
@@ -353,7 +381,6 @@ The module for init Genesis
     // Lock the TreasuryWithdrawCapability <b>to</b> <a href="Dao.md#0x1_Dao">Dao</a>
     <a href="TreasuryWithdrawDaoProposal.md#0x1_TreasuryWithdrawDaoProposal_plugin">TreasuryWithdrawDaoProposal::plugin</a>(&genesis_account, withdraw_cap);
 
-    <a href="BlockReward.md#0x1_BlockReward_initialize">BlockReward::initialize</a>(&genesis_account, reward_delay);
     <a href="TransactionFee.md#0x1_TransactionFee_initialize">TransactionFee::initialize</a>(&genesis_account);
 
     // only test/dev network set genesis auth key.
