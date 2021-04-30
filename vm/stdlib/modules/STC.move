@@ -63,49 +63,53 @@ module STC {
         OnChainConfigDao::plugin<STC, TransactionTimeoutConfig::TransactionTimeoutConfig>(account);
     }
 
+    spec fun initialize {
+        include Token::RegisterTokenAbortsIf<STC>{precision: PRECISION};
+    }
+
     /// STC initialization.
     public fun initialize_v2(
-        signer: &signer,
+        account: &signer,
         total_amount: u128,
         voting_delay: u64,
         voting_period: u64,
         voting_quorum_rate: u8,
         min_action_delay: u64,
     ): Treasury::WithdrawCapability<STC> {
-        Token::register_token<STC>(signer, PRECISION);
+        Token::register_token<STC>(account, PRECISION);
 
         // Mint all stc, and destroy mint capability
 
-        let total_stc = Token::mint<STC>(signer, total_amount);
-        let withdraw_cap = Treasury::initialize(signer, total_stc);
-        let mint_cap = Token::remove_mint_capability<STC>(signer);
+        let total_stc = Token::mint<STC>(account, total_amount);
+        let withdraw_cap = Treasury::initialize(account, total_stc);
+        let mint_cap = Token::remove_mint_capability<STC>(account);
         Token::destroy_mint_capability(mint_cap);
 
-        let burn_cap = Token::remove_burn_capability<STC>(signer);
-        move_to(signer, SharedBurnCapability { cap: burn_cap });
+        let burn_cap = Token::remove_burn_capability<STC>(account);
+        move_to(account, SharedBurnCapability { cap: burn_cap });
         Dao::plugin<STC>(
-            signer,
+            account,
             voting_delay,
             voting_period,
             voting_quorum_rate,
             min_action_delay,
         );
-        ModifyDaoConfigProposal::plugin<STC>(signer);
-        let upgrade_plan_cap = PackageTxnManager::extract_submit_upgrade_plan_cap(signer);
+        ModifyDaoConfigProposal::plugin<STC>(account);
+        let upgrade_plan_cap = PackageTxnManager::extract_submit_upgrade_plan_cap(account);
         UpgradeModuleDaoProposal::plugin<STC>(
-            signer,
+            account,
             upgrade_plan_cap,
         );
         // the following configurations are gov-ed by Dao.
-        OnChainConfigDao::plugin<STC, TransactionPublishOption::TransactionPublishOption>(signer);
-        OnChainConfigDao::plugin<STC, VMConfig::VMConfig>(signer);
-        OnChainConfigDao::plugin<STC, ConsensusConfig::ConsensusConfig>(signer);
-        OnChainConfigDao::plugin<STC, RewardConfig::RewardConfig>(signer);
-        OnChainConfigDao::plugin<STC, TransactionTimeoutConfig::TransactionTimeoutConfig>(signer);
+        OnChainConfigDao::plugin<STC, TransactionPublishOption::TransactionPublishOption>(account);
+        OnChainConfigDao::plugin<STC, VMConfig::VMConfig>(account);
+        OnChainConfigDao::plugin<STC, ConsensusConfig::ConsensusConfig>(account);
+        OnChainConfigDao::plugin<STC, RewardConfig::RewardConfig>(account);
+        OnChainConfigDao::plugin<STC, TransactionTimeoutConfig::TransactionTimeoutConfig>(account);
         withdraw_cap
     }
 
-    spec fun initialize {
+    spec fun initialize_v2 {
         include Token::RegisterTokenAbortsIf<STC>{precision: PRECISION};
     }
 

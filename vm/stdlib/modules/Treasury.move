@@ -8,6 +8,11 @@ module Treasury {
      use 0x1::Math;
      use 0x1::Token::{Self,Token};
 
+    spec module {
+        pragma verify = false; // break after enabling v2 compilation scheme
+        pragma aborts_if_is_strict;
+    }
+
     struct Treasury<TokenT> has store,key {
         balance: Token<TokenT>,
         /// event handle for treasury withdraw event
