@@ -941,6 +941,13 @@ Get LinearTimeWithdrawCapability start_time in seconds
 ## Specification
 
 
+
+<pre><code><b>pragma</b> verify = <b>false</b>;
+<b>pragma</b> aborts_if_is_strict;
+</code></pre>
+
+
+
 <a name="@Specification_1_do_withdraw"></a>
 
 ### Function `do_withdraw`

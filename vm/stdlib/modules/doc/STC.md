@@ -17,6 +17,7 @@ It uses apis defined in the <code><a href="Token.md#0x1_Token">Token</a></code> 
 -  [Function `token_address`](#0x1_STC_token_address)
 -  [Specification](#@Specification_1)
     -  [Function `initialize`](#@Specification_1_initialize)
+    -  [Function `initialize_v2`](#@Specification_1_initialize_v2)
     -  [Function `is_stc`](#@Specification_1_is_stc)
     -  [Function `burn`](#@Specification_1_burn)
     -  [Function `token_address`](#@Specification_1_token_address)
@@ -168,7 +169,7 @@ STC initialization.
 STC initialization.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="STC.md#0x1_STC_initialize_v2">initialize_v2</a>(signer: &signer, total_amount: u128, voting_delay: u64, voting_period: u64, voting_quorum_rate: u8, min_action_delay: u64): <a href="Treasury.md#0x1_Treasury_WithdrawCapability">Treasury::WithdrawCapability</a>&lt;<a href="STC.md#0x1_STC_STC">STC::STC</a>&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="STC.md#0x1_STC_initialize_v2">initialize_v2</a>(account: &signer, total_amount: u128, voting_delay: u64, voting_period: u64, voting_quorum_rate: u8, min_action_delay: u64): <a href="Treasury.md#0x1_Treasury_WithdrawCapability">Treasury::WithdrawCapability</a>&lt;<a href="STC.md#0x1_STC_STC">STC::STC</a>&gt;
 </code></pre>
 
 
@@ -178,43 +179,43 @@ STC initialization.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="STC.md#0x1_STC_initialize_v2">initialize_v2</a>(
-    signer: &signer,
+    account: &signer,
     total_amount: u128,
     voting_delay: u64,
     voting_period: u64,
     voting_quorum_rate: u8,
     min_action_delay: u64,
 ): <a href="Treasury.md#0x1_Treasury_WithdrawCapability">Treasury::WithdrawCapability</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt; {
-    <a href="Token.md#0x1_Token_register_token">Token::register_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(signer, <a href="STC.md#0x1_STC_PRECISION">PRECISION</a>);
+    <a href="Token.md#0x1_Token_register_token">Token::register_token</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(account, <a href="STC.md#0x1_STC_PRECISION">PRECISION</a>);
 
     // Mint all stc, and destroy mint capability
 
-    <b>let</b> total_stc = <a href="Token.md#0x1_Token_mint">Token::mint</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(signer, total_amount);
-    <b>let</b> withdraw_cap = <a href="Treasury.md#0x1_Treasury_initialize">Treasury::initialize</a>(signer, total_stc);
-    <b>let</b> mint_cap = <a href="Token.md#0x1_Token_remove_mint_capability">Token::remove_mint_capability</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(signer);
+    <b>let</b> total_stc = <a href="Token.md#0x1_Token_mint">Token::mint</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(account, total_amount);
+    <b>let</b> withdraw_cap = <a href="Treasury.md#0x1_Treasury_initialize">Treasury::initialize</a>(account, total_stc);
+    <b>let</b> mint_cap = <a href="Token.md#0x1_Token_remove_mint_capability">Token::remove_mint_capability</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(account);
     <a href="Token.md#0x1_Token_destroy_mint_capability">Token::destroy_mint_capability</a>(mint_cap);
 
-    <b>let</b> burn_cap = <a href="Token.md#0x1_Token_remove_burn_capability">Token::remove_burn_capability</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(signer);
-    move_to(signer, <a href="STC.md#0x1_STC_SharedBurnCapability">SharedBurnCapability</a> { cap: burn_cap });
+    <b>let</b> burn_cap = <a href="Token.md#0x1_Token_remove_burn_capability">Token::remove_burn_capability</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(account);
+    move_to(account, <a href="STC.md#0x1_STC_SharedBurnCapability">SharedBurnCapability</a> { cap: burn_cap });
     <a href="Dao.md#0x1_Dao_plugin">Dao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(
-        signer,
+        account,
         voting_delay,
         voting_period,
         voting_quorum_rate,
         min_action_delay,
     );
-    <a href="ModifyDaoConfigProposal.md#0x1_ModifyDaoConfigProposal_plugin">ModifyDaoConfigProposal::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(signer);
-    <b>let</b> upgrade_plan_cap = <a href="PackageTxnManager.md#0x1_PackageTxnManager_extract_submit_upgrade_plan_cap">PackageTxnManager::extract_submit_upgrade_plan_cap</a>(signer);
+    <a href="ModifyDaoConfigProposal.md#0x1_ModifyDaoConfigProposal_plugin">ModifyDaoConfigProposal::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(account);
+    <b>let</b> upgrade_plan_cap = <a href="PackageTxnManager.md#0x1_PackageTxnManager_extract_submit_upgrade_plan_cap">PackageTxnManager::extract_submit_upgrade_plan_cap</a>(account);
     <a href="UpgradeModuleDaoProposal.md#0x1_UpgradeModuleDaoProposal_plugin">UpgradeModuleDaoProposal::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;(
-        signer,
+        account,
         upgrade_plan_cap,
     );
     // the following configurations are gov-ed by <a href="Dao.md#0x1_Dao">Dao</a>.
-    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="TransactionPublishOption.md#0x1_TransactionPublishOption_TransactionPublishOption">TransactionPublishOption::TransactionPublishOption</a>&gt;(signer);
-    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="VMConfig.md#0x1_VMConfig_VMConfig">VMConfig::VMConfig</a>&gt;(signer);
-    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="ConsensusConfig.md#0x1_ConsensusConfig_ConsensusConfig">ConsensusConfig::ConsensusConfig</a>&gt;(signer);
-    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="RewardConfig.md#0x1_RewardConfig_RewardConfig">RewardConfig::RewardConfig</a>&gt;(signer);
-    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="TransactionTimeoutConfig.md#0x1_TransactionTimeoutConfig_TransactionTimeoutConfig">TransactionTimeoutConfig::TransactionTimeoutConfig</a>&gt;(signer);
+    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="TransactionPublishOption.md#0x1_TransactionPublishOption_TransactionPublishOption">TransactionPublishOption::TransactionPublishOption</a>&gt;(account);
+    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="VMConfig.md#0x1_VMConfig_VMConfig">VMConfig::VMConfig</a>&gt;(account);
+    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="ConsensusConfig.md#0x1_ConsensusConfig_ConsensusConfig">ConsensusConfig::ConsensusConfig</a>&gt;(account);
+    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="RewardConfig.md#0x1_RewardConfig_RewardConfig">RewardConfig::RewardConfig</a>&gt;(account);
+    <a href="OnChainConfigDao.md#0x1_OnChainConfigDao_plugin">OnChainConfigDao::plugin</a>&lt;<a href="STC.md#0x1_STC">STC</a>, <a href="TransactionTimeoutConfig.md#0x1_TransactionTimeoutConfig_TransactionTimeoutConfig">TransactionTimeoutConfig::TransactionTimeoutConfig</a>&gt;(account);
     withdraw_cap
 }
 </code></pre>
@@ -318,6 +319,22 @@ Return STC token address.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="STC.md#0x1_STC_initialize">initialize</a>(account: &signer, voting_delay: u64, voting_period: u64, voting_quorum_rate: u8, min_action_delay: u64)
+</code></pre>
+
+
+
+
+<pre><code><b>include</b> <a href="Token.md#0x1_Token_RegisterTokenAbortsIf">Token::RegisterTokenAbortsIf</a>&lt;<a href="STC.md#0x1_STC">STC</a>&gt;{precision: <a href="STC.md#0x1_STC_PRECISION">PRECISION</a>};
+</code></pre>
+
+
+
+<a name="@Specification_1_initialize_v2"></a>
+
+### Function `initialize_v2`
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="STC.md#0x1_STC_initialize_v2">initialize_v2</a>(account: &signer, total_amount: u128, voting_delay: u64, voting_period: u64, voting_quorum_rate: u8, min_action_delay: u64): <a href="Treasury.md#0x1_Treasury_WithdrawCapability">Treasury::WithdrawCapability</a>&lt;<a href="STC.md#0x1_STC_STC">STC::STC</a>&gt;
 </code></pre>
 
 
